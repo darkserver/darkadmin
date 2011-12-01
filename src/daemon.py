@@ -6,6 +6,7 @@ import struct
 
 cfg = {
 	'sockfile' : 'darkadmin.sock',
+	'uid_min'  : 1000,
 }
 
 SO_PEERCRED = 17
@@ -40,7 +41,7 @@ def main():
 			continue
 
 		# check credentials
-		if uid < 2000 or uid > 65000:
+		if uid < cfg['uid_min'] or uid > 65000:
 			client.send("Access Denied!")
 			log("WARN: UID %s is not allowed to use darkadmin" % uid)
 			client.close()
