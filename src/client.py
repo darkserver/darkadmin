@@ -13,8 +13,14 @@ def main():
 	sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 	sock.setsockopt(socket.SOL_SOCKET, SO_PASSCRED, 1)
 	sock.connect(cfg['sockfile'])
-	sock.send(' '.join(sys.argv))
-	data = sock.recv(1024)
+	try:
+		sock.send(' '.join(sys.argv))
+		data = sock.recv(1024)
+	except socket.error, e:
+		# daemon sends error message to client
+		# show it
+		print sock.recv(1024)
+		
 
 if __name__ == "__main__":
 	try:

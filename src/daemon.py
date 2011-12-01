@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, socket
+import os, socket, time
 import struct
 
 cfg = {
@@ -9,6 +9,9 @@ cfg = {
 }
 
 SO_PEERCRED = 17
+
+def log(msg):
+	print("[%s] %s" % (time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()), msg))
 
 def main():
 	sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -29,6 +32,19 @@ def main():
 		# get unix credential
 		creds = client.getsockopt(socket.SOL_SOCKET, SO_PEERCRED, struct.calcsize('3i'))
 		pid, uid, gid = struct.unpack('3i', creds)
+
+		if not uid:
+			client.send("Access Denied!")
+			log("WARN: UID not defined")
+			client.close()
+			continue
+
+		# check credentials
+		if uid < 2000 or uid > 65000:
+			client.send("Access Denied!")
+			log("WARN: UID %s is not allowed to use darkadmin" % uid)
+			client.close()
+			continue
 
 		data = client.recv(1024)
 		if not data:
