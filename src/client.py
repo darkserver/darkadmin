@@ -7,8 +7,11 @@ cfg = {
 	'sockfile' : 'darkadmin.sock',
 }
 
+SO_PASSCRED = 16
+
 def main():
 	sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+	sock.setsockopt(socket.SOL_SOCKET, SO_PASSCRED, 1)
 	sock.connect(cfg['sockfile'])
 	sock.send(' '.join(sys.argv))
 	data = sock.recv(1024)
