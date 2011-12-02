@@ -16,6 +16,7 @@ def main():
 	try:
 		sock.send(' '.join(sys.argv[1:]))
 		data = sock.recv(1024)
+		print data
 	except socket.error, e:
 		# daemon sends error message to client
 		# show it

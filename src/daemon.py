@@ -56,7 +56,15 @@ def main():
 			 	break
 			args = data.split(' ')
 			log("Request: %s" % ' '.join(args) )
-			client.send('world')
+			
+			try:
+				module = __import__("modules.%s" % args[0])
+				ret = getattr(module, args[0]).process(args[1:])
+				if ret:
+					client.send(ret['reply'])
+			except ImportError:
+				log("WARN: No module named '%s'" % args[0])
+				client.send("No module named '%s'" % args[0])
 			sys.exit(0)
 
 if __name__ == "__main__":
