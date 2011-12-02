@@ -22,7 +22,13 @@ def main():
 		os.remove(cfg['sockfile'])
 	except OSError:
 		pass
-	sock.bind(cfg['sockfile'])
+
+	try:
+		sock.bind(cfg['sockfile'])
+	except socketerror, e:
+		print "Can't create socket:\n%s" % e
+		sys.exit(1)
+
 	os.chmod(cfg['sockfile'], 0666)
 
 	sock.listen(5)
