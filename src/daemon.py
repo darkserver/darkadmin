@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os, sys, pwd, time, struct, socket
+import config
 
-cfg = {
-	'sockfile' : 'darkadmin.sock',
-	'uid_min'  : 1000,
-}
+cfg = config.read('/etc/darkadmin/main.conf')
 
 SO_PEERCRED = 17
 
@@ -58,13 +56,15 @@ def main():
 			log("Request: %s" % ' '.join(args) )
 			
 			try:
-				module = __import__("modules.%s" % args[0])
-				ret = getattr(module, args[0]).process(args[1:])
+				module = __import__("modules.%s" % args[1])
+				ret = getattr(module, args[1]).process(args[:1]+args[2:], cfg, user)
 				if ret:
 					client.send(ret['reply'])
-			except ImportError:
-				log("WARN: No module named '%s'" % args[0])
-				client.send("No module named '%s'" % args[0])
+				else:
+					client.send('Done.')
+			except ImportError, e:
+				log("WARN: %s" % e)
+				client.send("No module named '%s'" % args[1])
 			sys.exit(0)
 
 if __name__ == "__main__":

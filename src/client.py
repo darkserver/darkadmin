@@ -14,7 +14,8 @@ def main():
 	sock.setsockopt(socket.SOL_SOCKET, SO_PASSCRED, 1)
 	sock.connect(cfg['sockfile'])
 	try:
-		sock.send(' '.join(sys.argv[1:]))
+		sys.argv[0] = 'cli'
+		sock.send(' '.join(sys.argv))
 		data = sock.recv(1024)
 		print data
 	except socket.error, e:
