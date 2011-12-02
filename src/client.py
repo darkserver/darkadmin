@@ -14,7 +14,7 @@ def main():
 	sock.setsockopt(socket.SOL_SOCKET, SO_PASSCRED, 1)
 	sock.connect(cfg['sockfile'])
 	try:
-		sock.send(' '.join(sys.argv))
+		sock.send(' '.join(sys.argv[1:]))
 		data = sock.recv(1024)
 	except socket.error, e:
 		# daemon sends error message to client
