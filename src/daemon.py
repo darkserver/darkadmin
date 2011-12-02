@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, socket, time
-import struct
+import os, sys, pwd, time, struct, socket
 
 cfg = {
 	'sockfile' : 'darkadmin.sock',
@@ -39,12 +38,9 @@ def main():
 		# get unix credential
 		creds = client.getsockopt(socket.SOL_SOCKET, SO_PEERCRED, struct.calcsize('3i'))
 		pid, uid, gid = struct.unpack('3i', creds)
+		user = pwd.getpwuid(uid)
 
-		if not uid:
-			client.send("Access Denied!")
-			log("WARN: UID not defined")
-			client.close()
-			continue
+		log("Connection: %s (%s)" % (user.pw_name, uid))
 
 		# check credentials
 		if uid < cfg['uid_min'] or uid > 65000:
@@ -52,12 +48,16 @@ def main():
 			log("WARN: UID %s is not allowed to use darkadmin" % uid)
 			client.close()
 			continue
-
-		data = client.recv(1024)
-		if not data:
-		 	break
-		print data
-		client.send('world')
+	
+		pid = os.fork()
+		if pid == 0:
+			data = client.recv(1024)
+			if not data:
+			 	break
+			args = data.split(' ')
+			log("Request: %s" % ' '.join(args) )
+			client.send('world')
+			sys.exit(0)
 
 if __name__ == "__main__":
 	try:
