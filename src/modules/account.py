@@ -13,10 +13,9 @@ def process(args, config, userdata):
 	}.get(args[1], help)(args[:1] + args[2:])
 
 def help(args):
-	reply  = \
+	return \
 		'Available commands:\n\n' \
 		'  show      shows all information about your account\n'
-	return { 'status': 0, 'reply': reply }
 
 def show(args):
 	global cfg, user
@@ -49,11 +48,9 @@ def show(args):
 			data['valid']  = str(row['valid'])
 	
 	if args[0] == 'json':
-		reply = json.dumps(data)
+		return json.dumps(data)
 	else:
-		reply = format_show(data)
-
-	return { 'status': status, 'reply': reply }
+		return format_show(data)
 
 def format_show(data):
 	if data['valid']:
