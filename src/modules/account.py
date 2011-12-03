@@ -1,5 +1,5 @@
 from sqlalchemy import *
-import json
+import pwd, grp, time, json
 
 cfg = {}
 user = None
@@ -22,22 +22,31 @@ def show(args):
 	global cfg, user
 	status = 0
 
-	db = create_engine("%s://%s:%s@%s/%s" % (cfg['dbdrv'], cfg['dbuser'], cfg['dbpass'], cfg['dbaddr'], cfg['dbname']))
-	raccount = db.execute("SELECT * FROM `accounts` WHERE uid=%s" % (user.pw_uid))
-	rdata    = db.execute("SELECT * FROM `accounts_data` WHERE uid=%s" % (user.pw_uid))
+	db = create_engine('%s://%s:%s@%s/%s' % (cfg['dbdrv'], cfg['dbuser'], cfg['dbpass'], cfg['dbaddr'], cfg['dbname']))
+	rdata    = db.execute('SELECT * FROM `accounts_data` WHERE uid=%s' % (user.pw_uid))
 
 	data = {}
-	for row in raccount:
-		data['login'] = row['login']
-		data['uid']   = row['uid']
-		data['gid']   = row['gid']
-		data['shell'] = row['shell']
+
+	data['login']  = user.pw_name
+	data['uid']    = user.pw_uid
+	data['shell']  = user.pw_shell
+	data['home']   = user.pw_dir
+	data['groups'] = []
+
+	for g in grp.getgrall():
+		for u in g.gr_mem:
+			if u == user.pw_name:
+				data['groups'].append(g.gr_name)
 	
 	for row in rdata:
 		data['first_name'] = row['first_name']
 		data['last_name']  = row['last_name']
 		data['city']       = row['city']
 		data['postcode']   = row['postcode']
+		data['address']    = row['address']
+		data['valid']      = None
+		if row['valid']:
+			data['valid']  = str(row['valid'])
 	
 	if args[0] == 'json':
 		reply = json.dumps(data)
@@ -47,12 +56,17 @@ def show(args):
 	return { 'status': status, 'reply': reply }
 
 def format_show(data):
+	if data['valid']:
+		t = time.strptime(data['valid'], '%Y-%m-%d')
+	else:
+		t = 'unlimited'
 	return \
-		'Account information:\n' \
-		+ '  Username:  %s\n'    %  data['login'] \
-		+ '  UID:GID:   %s:%s\n' % (data['uid'], data['gid']) \
-		+ '  Shell:     %s\n'    %  data['shell'] \
-		+ '  Name:      %s %s\n' % (data['first_name'], data['last_name']) \
-		+ '  City:      %s\n'    %  data['city'] \
-		+ '  Post Code: %s\n'    %  data['postcode']
+		'Account information for user \033[1;36m%s\033[0m:\n\n' % data['login'] \
+	  + '  \033[1;37mValid until:\033[0m %s\n'    %  time.strftime('%d %B %Y', t) \
+	  + '  \033[1;37mGroups:\033[0m      %s\n'    %  ' '.join(data['groups']) \
+	  + '  \033[1;37mShell:\033[0m       %s\n'    %  data['shell'] \
+	  + '  \033[1;37mName:\033[0m        %s %s\n' % (data['first_name'], data['last_name']) \
+	  + '  \033[1;37mPost code:\033[0m   %s\n'    %  data['postcode'] \
+	  + '  \033[1;37mAddress:\033[0m     %s\n'    %  data['city'] \
+	  + '               %s\n'    %  data['address']
 
