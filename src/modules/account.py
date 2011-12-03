@@ -14,8 +14,8 @@ def process(args, config, userdata):
 
 def help(args):
 	reply  = \
-		'Available commands:\n' \
-		'  show      shows all information about your account'
+		'Available commands:\n\n' \
+		'  show      shows all information about your account\n'
 	return { 'status': 0, 'reply': reply }
 
 def show(args):
@@ -61,7 +61,7 @@ def format_show(data):
 	else:
 		t = 'unlimited'
 	return \
-		'Account information for user \033[1;36m%s\033[0m:\n\n' % data['login'] \
+	    'Account information for user \033[1;36m%s\033[0m:\n\n' % data['login'] \
 	  + '  \033[1;37mValid until:\033[0m %s\n'    %  time.strftime('%d %B %Y', t) \
 	  + '  \033[1;37mGroups:\033[0m      %s\n'    %  ' '.join(data['groups']) \
 	  + '  \033[1;37mShell:\033[0m       %s\n'    %  data['shell'] \

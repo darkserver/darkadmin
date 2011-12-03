@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, sys, pwd, time, struct, socket
+import os, sys, pwd, struct, socket
 import config
+from log import *
 
 cfg = config.read('/etc/darkadmin/main.conf')
 
 SO_PEERCRED = 17
-
-def log(msg):
-	print("[%s] %s" % (time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()), msg))
 
 def main():
 	sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
