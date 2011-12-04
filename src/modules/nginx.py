@@ -22,6 +22,7 @@ def help(args):
 
 def site_enable(args):
 	sites = args[1:]
+	reload_nginx = False
 	ret = []
 
 	for s in sites:
@@ -32,27 +33,35 @@ def site_enable(args):
 			if os.path.exists(dst):
 				ret.append({'message': 'Site %s is already enabled' % s})
 			else:
+				reload_nginx = True
 				os.symlink(src, dst)
-				devnull = open('/dev/null', 'w')
-				subprocess.call(cfg['nginx:reload_cmd'].split(' '), stdout=devnull)
 				ret.append({'message': 'Site %s enabled' % s})
 		else:
 			ret.append({'message': 'No site called %s' % s})
+	
+	if reload_nginx:
+		devnull = open('/dev/null', 'w')
+		subprocess.call(cfg['nginx:reload_cmd'].split(' '), stdout=devnull)
+		
 	return json.dumps(ret)
 
 def site_disable(args):
 	sites = args[1:]
+	reload_nginx = False
 	ret = []
 
 	for s in sites:
 		dst = os.path.join(cfg['nginx:sites_enabled'], user.pw_name, s)
 		if os.path.exists(dst):
+			reload_nginx = True
 			os.unlink(dst)
-			devnull = open('/dev/null', 'w')
-			subprocess.call(cfg['nginx:reload_cmd'].split(' '), stdout=devnull)
 			ret.append({ 'message': 'Site %s disabled' % s})
 		else:
 			ret.append({'message': 'Site %s is already disabled' % s})
+
+	if reload_nginx:
+		devnull = open('/dev/null', 'w')
+		subprocess.call(cfg['nginx:reload_cmd'].split(' '), stdout=devnull)
 	return json.dumps(ret)
 
 def list_sites(args):
