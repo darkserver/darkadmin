@@ -9,7 +9,7 @@ try:
 	cfg = config.read('/etc/darkadmin/main.conf')
 except IOError, e:
 	print e
-	exit(1)
+	sys.exit(1)
 
 SO_PEERCRED = 17
 
@@ -61,7 +61,7 @@ def main():
 				# force help if no arguments for module
 				if len(args) < 3:
 					args.append('help')
-				module = __import__("modules.%s" % args[1])
+				module = __import__('modules.%s' % args[1])
 				ret = getattr(module, args[1]).process(args[:1]+args[2:], cfg, user)
 				if ret:
 					client.send(ret)

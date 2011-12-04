@@ -21,38 +21,63 @@ def help(args):
 		'  list                list all sites with availability status\n'
 
 def site_enable(args):
-	src = os.path.join(cfg['nginx:sites_available'], user.pw_name, args[1])
-	dst = os.path.join(cfg['nginx:sites_enabled'], user.pw_name, args[1])
+	sites = args[1:]
+	ret = []
 
-	if os.path.isfile(src):
-		if os.path.exists(dst):
-			return json.dumps({ 'message': 'Site %s is already enabled' % args[1] })
+	for s in sites:
+		src = os.path.join(cfg['nginx:sites_available'], user.pw_name, s)
+		dst = os.path.join(cfg['nginx:sites_enabled'], user.pw_name, s)
+
+		if os.path.isfile(src):
+			if os.path.exists(dst):
+				ret.append({'message': 'Site %s is already enabled' % s})
+			else:
+				os.symlink(src, dst)
+				devnull = open('/dev/null', 'w')
+				subprocess.call(cfg['nginx:reload_cmd'].split(' '), stdout=devnull)
+				ret.append({'message': 'Site %s enabled' % s})
 		else:
-			os.symlink(src, dst)
-			devnull = open('/dev/null', 'w')
-			subprocess.call(cfg['nginx:reload_cmd'].split(' '), stdout=devnull)
-			return json.dumps({ 'message': 'Site %s enabled' % args[1] })
-	else:
-		return json.dumps({ 'message': 'No site called %s' % args[1]})
+			ret.append({'message': 'No site called %s' % s})
+	return json.dumps(ret)
 
 def site_disable(args):
-	dst = os.path.join(cfg['nginx:sites_enabled'], user.pw_name, args[1])
+	sites = args[1:]
+	ret = []
 
-	if os.path.exists(dst):
-		os.unlink(dst)
-		devnull = open('/dev/null', 'w')
-		subprocess.call(cfg['nginx:reload_cmd'].split(' '), stdout=devnull)
-		return json.dumps({ 'message': 'Site %s disabled' % args[1]})
-	else:
-		return json.dumps({ 'message': 'Site %s is already disabled' % args[1]})
+	for s in sites:
+		dst = os.path.join(cfg['nginx:sites_enabled'], user.pw_name, s)
+		if os.path.exists(dst):
+			os.unlink(dst)
+			devnull = open('/dev/null', 'w')
+			subprocess.call(cfg['nginx:reload_cmd'].split(' '), stdout=devnull)
+			ret.append({ 'message': 'Site %s disabled' % s})
+		else:
+			ret.append({'message': 'Site %s is already disabled' % s})
+	return json.dumps(ret)
 
 def list_sites(args):
-	data = {}
+	data = []
 
 	saval = os.listdir(os.path.join(cfg['nginx:sites_available'], user.pw_name))
+
 	for s in saval:
 		status = os.path.isfile(os.path.join(cfg['nginx:sites_enabled'], user.pw_name, s))
-		data[s] = status
+		data.append({
+			'domain' : s,
+			'status' : status,
+		})
+	
+	# reverse order for sorting
+	for d in data:
+		d['domain'] = d['domain'].split('.')
+		d['domain'].reverse()
+	
+	data = sorted(data, key=lambda k: k['domain'])
+
+	# reverse again to show correct domain names
+	for d in data:
+		d['domain'].reverse()
+		d['domain'] = '.'.join(d['domain'])
 
 	if args[0] == 'json':
 		return json.dumps(data)
@@ -61,10 +86,13 @@ def list_sites(args):
 
 def format_list_sites(data):
 	ret = 'Your sites:\n\n'
-
-	for site,status in data.iteritems():
-		if status == True:
-			ret += '  \033[1;32mon\033[0m   %s\n' % site
+ 
+ 	counter = 0
+	for site in data:
+		counter += 1
+		num = ('{: >#%s,}' % (len(data)/10+1)).format(counter)
+		if site['status'] == True:
+			ret += '  %s  \033[1;32mon\033[0m   %s\n' % (num, site['domain'])
 		else:
-			ret += '  \033[1;31moff\033[0m  %s\n' % site
+			ret += '  %s  \033[1;31moff\033[0m  %s\n' % (num, site['domain'])
 	return ret
