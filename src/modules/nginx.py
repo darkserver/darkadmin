@@ -88,11 +88,19 @@ def format_list_sites(data):
 	ret = 'Your sites:\n\n'
  
  	counter = 0
+	
+	lennum  = len(data) / 10 + 1
+	lenname = 1
+	for site in data:
+		if lenname < len(site['domain']):
+			lenname = len(site['domain'])
+
 	for site in data:
 		counter += 1
-		num = ('{: >#%s,}' % (len(data)/10+1)).format(counter)
+		num  = ('{0: >#%s}' % lennum).format(counter)
+		name = ('{0: >%s}' % lenname).format(site['domain'])
 		if site['status'] == True:
-			ret += '  %s  \033[1;32mon\033[0m   %s\n' % (num, site['domain'])
+			ret += '  %s  \033[1;32mon\033[0m   %s\n' % (num, name)
 		else:
-			ret += '  %s  \033[1;31moff\033[0m  %s\n' % (num, site['domain'])
+			ret += '  %s  \033[1;31moff\033[0m  %s\n' % (num, name)
 	return ret
