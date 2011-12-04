@@ -59,16 +59,16 @@ def show(args):
 
 def format_show(data):
 	if data['valid']:
-		t = time.strptime(data['valid'], '%Y-%m-%d')
+		t = time.strftime('%d %B %Y', time.strptime(data['valid'], '%Y-%m-%d'))
 	else:
 		t = 'unlimited'
 	return \
 	    'Account information for user \033[1;36m%s\033[0m:\n\n' % data['login'] \
-	  + '  \033[1;37mValid until:\033[0m %s\n'    %  time.strftime('%d %B %Y', t) \
+	  + '  \033[1;37mValid until:\033[0m %s\n'    %  t \
 	  + '  \033[1;37mGroups:\033[0m      %s\n'    %  ' '.join(data['groups']) \
 	  + '  \033[1;37mShell:\033[0m       %s\n'    %  data['shell'] \
 	  + '  \033[1;37mName:\033[0m        %s %s\n' % (data['first_name'], data['last_name']) \
 	  + '  \033[1;37mPost code:\033[0m   %s\n'    %  data['postcode'] \
 	  + '  \033[1;37mAddress:\033[0m     %s\n'    %  data['city'] \
-	  + '               %s\n'    %  data['address']
+	  + '               %s\n'                     %  data['address']
 
