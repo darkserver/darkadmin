@@ -24,13 +24,19 @@ def show(args):
 	db = create_engine('%s://%s:%s@%s/%s' % (cfg['dbdrv'], cfg['dbuser'], cfg['dbpass'], cfg['dbaddr'], cfg['dbname']))
 	rdata    = db.execute('SELECT * FROM `accounts_data` WHERE uid=%s' % (user.pw_uid))
 
-	data = {}
-
-	data['login']  = user.pw_name
-	data['uid']    = user.pw_uid
-	data['shell']  = user.pw_shell
-	data['home']   = user.pw_dir
-	data['groups'] = []
+	data = {
+		'login'      : user.pw_name,
+		'uid'        : user.pw_uid,
+		'shell'      : user.pw_shell,
+		'home'       : user.pw_dir,
+		'groups'     : [],
+		'first_name' : '',
+		'last_name'  : '',
+		'city'       : '',
+		'postcode'   : '',
+		'address'    : '',
+		'valid'      : None,
+	}
 
 	for g in grp.getgrall():
 		for u in g.gr_mem:
@@ -43,7 +49,6 @@ def show(args):
 		data['city']       = row['city']
 		data['postcode']   = row['postcode']
 		data['address']    = row['address']
-		data['valid']      = None
 		if row['valid']:
 			data['valid']  = str(row['valid'])
 	

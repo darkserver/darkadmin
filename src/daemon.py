@@ -5,7 +5,11 @@ import os, sys, pwd, struct, socket
 import config
 from log import *
 
-cfg = config.read('/etc/darkadmin/main.conf')
+try:
+	cfg = config.read('/etc/darkadmin/main.conf')
+except IOError, e:
+	print e
+	exit(1)
 
 SO_PEERCRED = 17
 
