@@ -4,7 +4,7 @@
 import os, socket, sys
 
 cfg = {
-	'sockfile' : 'darkadmin.sock',
+	'sockfile' : '/var/lib/darkadmin/darkadmin.sock',
 }
 
 SO_PASSCRED = 16

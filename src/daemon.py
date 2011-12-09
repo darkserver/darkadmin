@@ -45,7 +45,7 @@ def main():
 		# check credentials
 		if uid < cfg['uid_min'] or uid > 65000:
 			client.send("Access Denied!")
-			log("WARN: UID %s is not allowed to use darkadmin" % uid)
+			warn("UID %s is not allowed to use darkadmin" % uid)
 			client.close()
 			continue
 	
@@ -68,7 +68,7 @@ def main():
 				else:
 					client.send('Done.')
 			except ImportError, e:
-				log("WARN: %s" % e)
+				warn("%s" % e)
 				client.send("No module named '%s'" % args[1])
 			sys.exit(0)
 
