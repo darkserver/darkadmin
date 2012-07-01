@@ -120,48 +120,22 @@ def format_list_sites(data):
 	return ret
 
 def site_add(args):
-	_help = 'Format: add <php|django> <domain> [<domainn> ...]'
+	_help = 'Format: add <php> <domain> [<domainn> ...]'
 
 	if len(args) < 3:
 		return _help
 	
-	data = {
-		'server_name' : ' '.join(args[2:]),
-		'listen'      : 80,
-		'access_log'  : '/var/log/nginx/%s/%s/access.log' % (user.pw_name, args[2]),
-		'error_log'   : '/var/log/nginx/%s/%s/error.log' % (user.pw_name, args[2]),
-		'locations' : {
-		},
-	}
-
+	conf = {}
 	if args[1] == 'php':
-		data['locations'] = {
-			'~ \.php$' : {
-				'include'      : 'template/php',
-				'fastcgi_pass' : '/var/lib/darkadmin/php/%s.sock' % user.pw_name,
-			},
-			'/' : {
-				'index'     : 'index.php index.html',
-				'autoindex' : 'off',
-			},
-		}
+		conf = _parse_config('modules/nginx/php.tpl')['%domain%']
+		conf['locations']['~ \.php?$']['fastcgi_pass'] = 'unix:/var/lib/darkadmin/php/%s.sock' % (user.pw_name)
 
-	elif args[1] == 'django':
-		data['locations'] = {
-			'/static/admin' : {
-				'alias' : '/home/%s/sites/%s/static/admin/media' % (user.pw_name, args[2])
-			},
-			'/static' : {
-				'alias' : '/home/%s/sites/%s/static/media' % (user.pw_name, args[2])
-			},
-			'/' : {
-				'include'      : 'templates/django',
-				'fastcgi_pass' : 'unix:/var/lib/darkadmin/django/%s_%s.sock' % (user.pw_name, args[2]),
-				'autoindex'    : 'off',
-			},
-		}
+	conf['server_name'] = ' '.join(args[2:])
+	conf['root']        = '%s/sites/%s' % (user.pw_dir, args[2])
+	conf['access_log']  = '/var/log/nginx/%s/%s/access.log' % (user.pw_name, args[2])
+	conf['error_log']   = '/var/log/nginx/%s/%s/error.log' % (user.pw_name, args[2])
 
-	fdata = _compose_config(data)
+	fdata = _compose_config({args[2] : conf})
 	fname = os.path.join(cfg['nginx:sites_available'], user.pw_name, args[2])
 	f = open(fname, 'w')
 	f.write(fdata)
@@ -199,7 +173,7 @@ def _compose_config(config):
 		dothis = True
 		while dothis == True:
 			for var, val in c.iteritems():
-				if sortbyid > len(sortby) - 1:
+				if sortbyid >= len(sortby):
 					dothis = False
 					continue
 
@@ -215,13 +189,17 @@ def _compose_config(config):
 					continue
 
 				if var == 'locations':
+					i = 0
 					for name, location in val.iteritems():
+						i += 1
 						data += "\tlocation %s {\n" % name
 						for var, val in location.iteritems():
 							if val == None or val == [] or val == {}:
 								continue
 							data += "\t\t%s %s;\n" % (var, val)
 						data += "\t}\n"
+						if i < len(location) - 1:
+							data += "\n"
 				else:
 					data += '\t%s %s;\n' % (var, val)
 
