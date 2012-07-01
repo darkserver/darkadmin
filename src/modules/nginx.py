@@ -182,16 +182,51 @@ def _compose_config(config):
 	data = \
 	    "server {\n" 
 	
-	for var, val in config.iteritems():
-		if var == 'locations':
-			for name, location in val.iteritems():
-				data += "\n\tlocation %s {\n" % name
-				for var, val in location.iteritems():
-					data += "\t\t%s %s;\n" % (var, val)
-				data += "\t}\n"
-		else:
-			data += '\t%s %s;\n' % (var, val)
-	
+	sortby = [
+		'server_name',
+		'listen',
+		'root',
+		'-',
+		'access_log',
+		'error_log',
+		'-',
+		'locations',
+	]
+
+	sortbyid = 0
+
+	for site, c in config.iteritems():
+		dothis = True
+		while dothis == True:
+			for var, val in c.iteritems():
+				if sortbyid > len(sortby) - 1:
+					dothis = False
+					continue
+
+				if sortby[sortbyid] == '-':
+					data += '\n'
+					sortbyid += 1
+					continue
+
+				if var != sortby[sortbyid]:
+					continue
+
+				if val == None or val == [] or val == {}:
+					continue
+
+				if var == 'locations':
+					for name, location in val.iteritems():
+						data += "\tlocation %s {\n" % name
+						for var, val in location.iteritems():
+							if val == None or val == [] or val == {}:
+								continue
+							data += "\t\t%s %s;\n" % (var, val)
+						data += "\t}\n"
+				else:
+					data += '\t%s %s;\n' % (var, val)
+
+			sortbyid += 1
+
 	data += "}"
 
 	return data
