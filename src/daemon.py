@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, sys, pwd, struct, socket
+import os, sys, pwd, struct, socket, signal
 import config
 from log import *
 
@@ -14,6 +14,8 @@ except IOError, e:
 SO_PEERCRED = 17
 
 def main():
+	signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+
 	sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 
