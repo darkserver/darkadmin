@@ -120,26 +120,46 @@ def format_list_sites(data):
 	return ret
 
 def site_add(args):
-	_help = 'Format: add <php> <domain> [<domainn> ...]'
+	_help = 'Format: add <php|django> <domain>[,<domain1>[,<domainn>]] [<django:project>]'
 
 	if len(args) < 3:
 		return _help
+	
+	domains = args[2].split(',')
+
+	nginx_logdir_user = '/var/log/nginx/%s' % (user.pw_name)
+	nginx_logdir_site = '%s/%s' % (nginx_logdir_user, domains[0])
 	
 	conf = {}
 	if args[1] == 'php':
 		conf = _parse_config('modules/nginx/php.tpl')['%domain%']
 		conf['locations']['~ \.php?$']['fastcgi_pass'] = 'unix:/var/lib/darkadmin/php/%s.sock' % (user.pw_name)
 
-	conf['server_name'] = ' '.join(args[2:])
-	conf['root']        = '%s/sites/%s' % (user.pw_dir, args[2])
-	conf['access_log']  = '/var/log/nginx/%s/%s/access.log' % (user.pw_name, args[2])
-	conf['error_log']   = '/var/log/nginx/%s/%s/error.log' % (user.pw_name, args[2])
+	elif args[1] == 'django':
+		if len(args) < 4:
+			return _help
 
-	fdata = _compose_config({args[2] : conf})
-	fname = os.path.join(cfg['nginx:sites_available'], user.pw_name, args[2])
+		conf = _parse_config('modules/nginx/django.tpl')['%domain%']
+		conf['locations']['/admin/static']['alias'] = '%s/sites/%s/admin/media' % (user.pw_dir, domains[0])
+		conf['locations']['/static']['alias'] = '%s/sites/%s/static' % (user.pw_dir, domains[0])
+		conf['locations']['/']['fastcgi_pass'] = 'unix:/var/lib/darkadmin/django/%s/%s.sock' % (user.pw_name, args[3])
+
+	conf['server_name'] = ' '.join(domains)
+	conf['root']        = '%s/sites/%s' % (user.pw_dir, domains[0])
+	conf['access_log']  = '%s/access.log' % (nginx_logdir_site)
+	conf['error_log']   = '%s/error.log' % (nginx_logdir_site)
+
+	fdata = _compose_config({domains[0] : conf})
+	fname = os.path.join(cfg['nginx:sites_available'], user.pw_name, domains[0])
 	f = open(fname, 'w')
 	f.write(fdata)
 	f.close()
+
+	# create nginx log dirs or nginx will give error
+	if not os.path.exists(nginx_logdir_user):
+		os.mkdir(nginx_logdir_user)
+	if not os.path.exists(nginx_logdir_site):
+		os.mkdir(nginx_logdir_site)
 
 	r = site_enable(['json', args[2]])
 
@@ -198,14 +218,14 @@ def _compose_config(config):
 								continue
 							data += "\t\t%s %s;\n" % (var, val)
 						data += "\t}\n"
-						if i < len(location) - 1:
+						if i < len(val):
 							data += "\n"
 				else:
 					data += '\t%s %s;\n' % (var, val)
 
 			sortbyid += 1
 
-	data += "}"
+	data += "}\n"
 
 	return data
 
