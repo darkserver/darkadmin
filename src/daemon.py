@@ -53,7 +53,7 @@ def main():
 	
 		pid = os.fork()
 		if pid == 0:
-			data = client.recv(1024)
+			data = client.recv(4096)
 			if not data:
 			 	break
 			args = data.split(' ')

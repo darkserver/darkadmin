@@ -15,17 +15,17 @@ def main():
 	try:
 		sock.connect(cfg['sockfile'])
 	except socket.error, e:
-		print "Can't connect to socket"
+		print "Can't connect to darkadmin!"
 		sys.exit(1)
 	try:
 		sys.argv[0] = 'cli'
 		sock.send(' '.join(sys.argv))
-		data = sock.recv(1024)
+		data = sock.recv(4096)
 		print data
 	except socket.error, e:
 		# daemon sends error message to client
 		# show it
-		print sock.recv(1024)
+		print sock.recv(4096)
 		
 
 if __name__ == "__main__":
