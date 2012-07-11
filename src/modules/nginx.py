@@ -22,7 +22,7 @@ def help(args):
 		'  list                   list all sites with availability status\n' \
 		'  enable <domain>        enables site\n' \
 		'  disable <domain>       disables site\n' \
-		'  add <type> <domain>    adds site with type where type can be: php, django\n' \
+		'  add <domain> <type>    adds site with type where type can be: php, django\n' \
 		'  del <domain>           deletes site information, doesn\'t delete files\n'
 
 def site_enable(args):
@@ -93,10 +93,7 @@ def list_sites(args):
 		d['domain'].reverse()
 		d['domain'] = '.'.join(d['domain'])
 
-	if args[0] == 'json':
-		return json.dumps(data)
-	else:
-		return format_list_sites(data)
+	return json.dumps({"sites":data})
 
 def format_list_sites(data):
 	ret = 'Your sites:\n\n'
@@ -120,29 +117,29 @@ def format_list_sites(data):
 	return ret
 
 def site_add(args):
-	_help = 'Format: add <php|django> <domain>[,<domain1>[,<domainn>]] [<django:project>]'
+	_help = 'Format: add <domain>[,<domain1>[,<domainn>]] <type>'
 
 	if len(args) < 3:
 		return _help
 	
-	domains = args[2].split(',')
+	domains = args[1].split(',')
 
 	nginx_logdir_user = '/var/log/nginx/%s' % (user.pw_name)
 	nginx_logdir_site = '%s/%s' % (nginx_logdir_user, domains[0])
 	
 	conf = {}
-	if args[1] == 'php':
+	if args[2] == 'php':
 		conf = _parse_config('modules/nginx/php.tpl')['%domain%']
 		conf['locations']['~ \.php?$']['fastcgi_pass'] = 'unix:/var/lib/darkadmin/php/%s.sock' % (user.pw_name)
 
-	elif args[1] == 'django':
+	elif args[2] == 'django':
 		if len(args) < 4:
 			return _help
 
 		conf = _parse_config('modules/nginx/django.tpl')['%domain%']
 		conf['locations']['/admin/static']['alias'] = '%s/sites/%s/admin/media' % (user.pw_dir, domains[0])
 		conf['locations']['/static']['alias'] = '%s/sites/%s/static' % (user.pw_dir, domains[0])
-		conf['locations']['/']['fastcgi_pass'] = 'unix:/var/lib/darkadmin/django/%s/%s.sock' % (user.pw_name, args[3])
+		conf['locations']['/']['fastcgi_pass'] = 'unix:/var/lib/darkadmin/django/%s/%s.sock' % (user.pw_name, domains[0])
 
 	conf['server_name'] = ' '.join(domains)
 	conf['root']        = '%s/sites/%s' % (user.pw_dir, domains[0])
@@ -161,7 +158,7 @@ def site_add(args):
 	if not os.path.exists(nginx_logdir_site):
 		os.mkdir(nginx_logdir_site)
 
-	r = site_enable(['json', args[2]])
+	r = site_enable(['json', domains[0]])
 
 	return "Added %s\n%s" % (args[1], r)
 

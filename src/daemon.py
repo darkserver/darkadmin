@@ -64,7 +64,7 @@ def main():
 				if len(args) < 3:
 					args.append('help')
 				module = __import__('modules.%s' % args[1])
-				ret = getattr(module, args[1]).process(args[:1]+args[2:], cfg, user)
+				ret = getattr(module, args[1]).process(args[:1] + args[2:], cfg, user)
 				if ret:
 					client.send(ret)
 				else:

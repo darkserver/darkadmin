@@ -20,7 +20,7 @@ server {
 	}
 
 	location / {
-		fastcgi_pass unix:/var/lib/darkadmin/django/%user%/%project%.sock;
+		fastcgi_pass unix:/var/lib/darkadmin/django/%user%/%domain%.sock;
 		include templates/fastcgi_django;
 	}
 }
